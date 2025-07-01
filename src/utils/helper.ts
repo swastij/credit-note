@@ -4,11 +4,13 @@ interface Helpers {
 	calcItemTotal(item: ItemInfo): number | string;
 	calcTax(items: ItemInfo[]): number | string;
 	calcSubTotal(items: ItemInfo[]): number | string;
-	calcFinalTotal(items: ItemInfo[]): number | string;
+    calcFinalTotal(items: ItemInfo[], discount?: string): number | string;
 	formatCurrency(
 		amount: number | string,
 		args?: Record<string, string>
 	): string;
+	calcRemainingCredit(item: ItemInfo[], credit: string): number | string;
+    calcTotalDiscount(items: ItemInfo[], discount?: string): number | string;
 }
 
 const helper: Helpers = {
@@ -78,16 +80,19 @@ const helper: Helpers = {
 	 * @returns {number} total.
 	 * @since 1.0.0
 	 */
-	calcFinalTotal: function (items: ItemInfo[]): number | string {
-		if (items.length === 0) {
-			return 0;
-		}
+	calcFinalTotal: function (
+        items: ItemInfo[],
+        discount?: string,
+    ): number | string {
+        if (items.length === 0) {
+            return 0;
+        }
 
-		const subTotal = Number(this.calcSubTotal(items));
-		const tax = Number(this.calcTax(items));
-
-		return (subTotal + tax).toFixed(2);
-	},
+        const subTotal = Number(this.calcSubTotal(items));
+        const tax = Number(this.calcTax(items));
+        const totalDiscount = Number(this.calcTotalDiscount(items, discount));
+        return (subTotal + tax - totalDiscount).toFixed(2);
+    },
 
 	/**
 	 * Format currency in international format.
@@ -119,6 +124,19 @@ const helper: Helpers = {
 			currency: args.currency,
 		}).format(Number(amount));
 	},
+
+	calcRemainingCredit: function (item: ItemInfo[], credit: string): string {
+        const total = this.calcFinalTotal(item);
+        return (Number(total) - Number(credit)).toFixed(2);
+    },
+
+    calcTotalDiscount: function (item: ItemInfo[], discount?: string): string {
+        let totalDiscount = 0;
+        item.forEach((item) => {
+            totalDiscount = totalDiscount + Number(item.discount ?? 0);
+        });
+        return (totalDiscount + Number(discount ?? 0)).toFixed(2);
+    },
 };
 
 module.exports = helper;

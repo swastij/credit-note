@@ -1,8 +1,8 @@
 {
-	"name": "@h1dd3nsn1p3r/pdf-invoice",
+	"name": "@swastij/credit-note",
 	"version": "1.0.10",
 	"author": "h1dd3nsn1p3r",
-	"description": "Simple yet powerful node JS library that generates PDF invoice on the fly.",
+	"description": "Simple yet powerful node JS library that generates Credit Note on the fly.",
 	"license": "MIT",
 	"main": "./dist/index.js",
 	"module": "./dist/index.mjs",
@@ -14,12 +14,13 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git@github.com:h1dd3nsn1p3r/pdf-invoice.git"
+		"url": "git@github.com:swastij/credit-note.git"
 	},
-	"homepage": "https://github.com/h1dd3nsn1p3r/pdf-invoice",
+	"homepage": "https://github.com/swastij/credit-note",
 	"keywords": [
 		"pdf",
 		"invoice",
+		"credit-note",
 		"estimate",
 		"receipt",
 		"generator",

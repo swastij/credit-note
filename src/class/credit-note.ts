@@ -1,0 +1,584 @@
+const fs = require("fs");
+const path = require("path");
+const invoiceMaker = require("pdfmake");
+const helper = require("@/utils/helper");
+const defaultCreditConfig = require("@/utils/credit_config");
+
+import type {
+    CompanyInfo,
+    CustomerInfo,
+    ItemInfo,
+    QRInfo,
+    Notes,
+      CreditNoteInfo,
+    CreditNoteConfiguration,
+    CreditNotePayLoad
+} from "../../global";
+
+
+export class PDFCreditNote {
+    payload: CreditNotePayLoad;
+    company: CompanyInfo;
+    creditNote: CreditNoteInfo;
+    customer: CustomerInfo;
+    items: ItemInfo[];
+    locale: string;
+    currency: string;
+    path: string;
+    qr?: QRInfo;
+    note: Notes;
+    date: string;
+    config: CreditNoteConfiguration;
+    constructor(
+        payload: CreditNotePayLoad,
+        config: CreditNoteConfiguration = defaultCreditConfig,
+    ) {
+        this.payload = payload;
+        this.config = defaultCreditConfig;
+        /**
+         * Content section.
+         */
+        this.company = payload.company;
+        this.customer = payload.customer;
+        this.creditNote = payload.creditNote;
+        this.items = payload.items;
+        this.qr = payload.qr;
+        this.note = payload.note;
+
+        /**
+         * Currency.
+         */
+        this.locale = this.creditNote?.locale || 'en-US';
+        this.currency = this.creditNote?.currency?.toUpperCase() || 'USD';
+
+        /**
+         * Credit Note path.
+         */
+        this.path = path.resolve(this.creditNote?.path) || './credit-note.pdf';
+
+        /**
+         * Credit Note date.
+         */
+        this.date = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+        });
+
+        /**
+         * Configuration.
+         */
+        this.config = config;
+    }
+
+    /**
+     * Create a PDF invoice.
+     *
+     * @returns {void}
+     * @since 1.0.0
+     */
+    async create(): Promise<string> {
+        const printer = new invoiceMaker(this.fonts());
+
+        const docDefinition = {
+            pageSize: 'A4',
+            orientation: 'portrait',
+            pageMargins: [40, 40, 40, 40],
+            info: this.docMeta(),
+            content: this.content(),
+            defaultStyle: this.docStyle(),
+            styles: this.docTypo(),
+        };
+
+        return new Promise((resolve, reject) => {
+            const doc = printer.createPdfKitDocument(docDefinition);
+            const stream = fs.createWriteStream(this.path);
+
+            doc.pipe(stream);
+
+            doc.on('end', () => resolve(this.path));
+
+            doc.on('error', (err: any) => reject(err));
+
+            doc.end();
+        });
+    }
+
+    /**
+     * Collection of available fonts.
+     *
+     * @returns {Record<string, Record<string, string>>} font.
+     * @since 1.0.0
+     */
+    fonts(): Record<string, Record<string, string>> {
+        const font = {
+            Helvetica: {
+                normal: 'Helvetica',
+                bold: 'Helvetica-Bold',
+                italics: 'Helvetica-Oblique',
+                bolditalics: 'Helvetica-BoldOblique',
+            },
+            Times: {
+                normal: 'Times-Roman',
+                bold: 'Times-Bold',
+                italics: 'Times-Italic',
+                bolditalics: 'Times-BoldItalic',
+            },
+            Courier: {
+                normal: 'Courier',
+                bold: 'Courier-Bold',
+                italics: 'Courier-Oblique',
+                bolditalics: 'Courier-BoldOblique',
+            },
+        };
+
+        const additionalFonts = this.config?.font || null;
+
+        if (additionalFonts && Object.keys(additionalFonts).length > 0) {
+            Object.assign(font, additionalFonts);
+        }
+
+        return font;
+    }
+
+    /**
+     * Doc meta.
+     *
+     * @returns {Record<string, string | undefined>}
+     * @since 1.0.0
+     */
+    docMeta(): Record<string, string | undefined> {
+        const meta = {
+            title: 'Credit Note - #' + this.creditNote.number,
+            author: this.company.name,
+            subject: 'Credit Note - ' + this.customer.name,
+            keywords: 'credit-note',
+        };
+
+        return meta;
+    }
+
+    /**
+     * Default invoice styles.
+     *
+     * @returns {Record<string, any>}
+     * @since 1.0.0
+     */
+    docStyle(): Record<string, any> {
+        let defaults = {
+            font: 'Helvetica',
+            fontSize: this.config?.style?.fontSize || 10,
+            lineHeight: 1.8,
+            bold: false,
+            color: '#000000',
+            columnGap: 30,
+        };
+
+        const style = this.config.style || null;
+
+        if (style && Object.keys(style).length > 0) {
+            defaults = { ...defaults, ...style };
+        }
+
+        return defaults;
+    }
+
+    /**
+     * Credit Note typography styles.
+     *
+     * @returns {Object} defaults.
+     * @since 1.0.0
+     */
+    docTypo(): Record<string, Record<string, unknown>> {
+        return {
+            h1: {
+                fontSize: 18,
+                bold: true,
+            },
+            h2: {
+                fontSize: 16,
+                bold: true,
+            },
+            h3: {
+                fontSize: 14,
+                bold: true,
+            },
+            text: {
+                fontSize: this.config?.style?.fontSize || 10,
+                bold: false,
+            },
+            textBold: {
+                fontSize: this.config?.style?.fontSize || 10,
+                bold: true,
+            },
+        };
+    }
+
+    /**
+     * Return the invoice layout.
+     *
+     * @returns {Object} layout.
+     * @since 1.0.0
+     */
+    content(): any {
+        const sections = [];
+
+        /**
+         * Left: Company section.
+         * Right: Credit Note section.
+         *
+         * @since 1.0.0
+         */
+        const sectionCompany = {
+            columns: [
+                {
+                    width: '45%',
+                    margin: [0, 70, 0, 0],
+                    stack: [] as any,
+                    style: 'text',
+                },
+                {
+                    width: '25%',
+                    margin: [0, 70, 0, 0],
+                    stack: [] as any,
+                    style: 'text',
+                },
+                {
+                    width: '30%',
+                    stack: [] as any,
+                    style: 'text',
+                },
+            ],
+        };
+
+        if (this.company.logo) {
+            if (!this.company.logo.startsWith('<svg')) {
+                throw new Error('Only SVG logo are supported.');
+            }
+
+            sectionCompany.columns[2].stack.unshift({
+                svg: this.company.logo,
+                margin: [0, 0, 300, 20],
+            });
+
+            sectionCompany.columns[2].stack.push({
+                text: this.company.name,
+                style: 'h3',
+            });
+        } else {
+            sectionCompany.columns[2].stack.unshift({
+                text: this.company.name,
+                style: 'h1',
+            });
+        }
+
+        if (this.company.address) {
+            sectionCompany.columns[2].stack.push({
+                text: this.company.address,
+                style: 'text',
+            });
+        }
+
+        if (this.company.phone) {
+            sectionCompany.columns[2].stack.push({
+                text: this.company.phone,
+                style: 'text',
+            });
+        }
+
+        if (this.company.email) {
+            sectionCompany.columns[2].stack.push({
+                text: this.company.email,
+                style: 'text',
+            });
+        }
+
+        if (this.company.website) {
+            sectionCompany.columns[2].stack.push({
+                text: this.company.website,
+                style: 'text',
+            });
+        }
+
+        if (this.company.taxId) {
+            sectionCompany.columns[2].stack.push({
+                text: this.company.taxId,
+                style: 'text',
+            });
+        }
+
+        if (this.company.bank) {
+            sectionCompany.columns[2].stack.push({
+                text: this.company.bank,
+                style: 'text',
+            });
+        }
+
+        // Credit Note information.
+        if (this.creditNote.label) {
+            sectionCompany.columns[0].stack.unshift({
+                text: this.creditNote.label,
+                style: 'h1',
+            });
+        } else {
+            sectionCompany.columns[0].stack.unshift({
+                text: this.config.string.creditNote || 'CREDIT NOTE',
+                style: 'h1',
+            });
+        }
+
+        const refLabel =
+            this.config.string.creditNoteNumber || 'Credit Note Number';
+
+        sectionCompany.columns[1].stack.push({
+            text: refLabel + ': #' + (this.creditNote.number || 1),
+            style: 'textBold',
+        });
+
+        const dateLabel = this.config.string.date;
+
+        sectionCompany.columns[1].stack.push({
+            text: dateLabel + ': ' + (this.creditNote.date || this.date),
+            style: 'text',
+        });
+
+        const taxRegLabel = this.config.string.taxReg;
+
+        sectionCompany.columns[1].stack.push({
+            text: taxRegLabel + ': ' + (this.creditNote.taxReg || ''),
+            style: 'text',
+        });
+
+        // sections.push(sectionCompany);
+
+        /**
+         * Left: Bill to section.
+         *
+         * @since 1.0.0
+         */
+        const sectionCustomer = {
+            columns: [
+                {
+                    width: 300,
+                    stack: [] as any,
+                    style: 'text',
+                },
+            ],
+        };
+
+        if (this.customer.name) {
+            sectionCustomer.columns[0].stack.push({
+                text: this.customer.name,
+                style: 'textBold',
+            });
+        }
+
+        if (this.customer.company) {
+            sectionCustomer.columns[0].stack.push({
+                text: this.customer.company,
+                style: 'text',
+            });
+        }
+
+        if (this.customer.address) {
+            sectionCustomer.columns[0].stack.push({
+                text: this.customer.address,
+                style: 'text',
+            });
+        }
+
+        if (this.customer.phone) {
+            sectionCustomer.columns[0].stack.push({
+                text: this.customer.phone,
+                style: 'text',
+            });
+        }
+
+        if (this.customer.email) {
+            sectionCustomer.columns[0].stack.push({
+                text: this.customer.email,
+                style: 'text',
+            });
+        }
+
+        if (this.customer.taxId) {
+            sectionCustomer.columns[0].stack.push({
+                text: this.customer.taxId,
+                style: 'text',
+            });
+        }
+
+        sectionCompany.columns[0].stack.push(
+            ...sectionCustomer.columns[0].stack,
+        );
+
+        sections.push(sectionCompany);
+
+        /**
+         * Full: Items section.
+         *
+         * @since 1.0.0
+         */
+        const sectionItems = {
+            margin: [0, 30, 0, 0],
+            lineHeight: 1.5,
+            table: {
+                widths: [200, 50, '*', 50, 50, '*'],
+                headerRows: 1,
+                lineHeight: 1.5,
+                body: [
+                    [
+                        `\n ${this.config.string.item}`,
+                        `\n ${this.config.string.quantity}`,
+                        `\n ${this.config.string.price}`,
+                        `\n ${this.config.string.tax}`,
+                        `\n ${this.config.string.discount}`,
+                        `\n ${this.config.string.total}`,
+                    ],
+                ] as any,
+            },
+        };
+
+        const currOptions = {
+            locale: this.locale,
+            currency: this.currency,
+        };
+
+        if (this.items.length > 0) {
+            this.items.forEach((item) => {
+                sectionItems.table.body.push([
+                    `\n ${item.name}`,
+                    `\n ${item.quantity}`,
+                    `\n ${helper.formatCurrency(item.price, currOptions)}`,
+                    `\n ${item.tax && item.tax > 0 ? item.tax + '%' : '-'}`,
+                    `\n ${helper.formatCurrency(item.discount?? 0, currOptions)}`,
+                    `\n ${helper.formatCurrency(
+                        helper.calcItemTotal(item),
+                        currOptions,
+                    )}`,
+                ]);
+            });
+        }
+
+        sections.push(sectionItems);
+
+        /**
+         * Right: Total section.
+         *
+         * @since 1.0.0
+         */
+        const sectionTotal = {
+            margin: [0, 20, 0, 0],
+            columns: [
+                {
+                    width: '*',
+                    stack: [' '],
+                    style: 'text',
+                },
+                {
+                    width: 200,
+                    lineHeight: 1.5,
+                    style: 'normal',
+                    table: {
+                        widths: [80, '*'],
+                        headerRows: 1,
+                        lineHeight: 1.5,
+                        body: [
+                            [
+                                `\n ${this.config.string.subTotal}`,
+                                `\n ${helper.formatCurrency(
+                                    helper.calcSubTotal(this.items),
+                                    currOptions,
+                                )}`,
+                            ],
+                            [
+                                `\n ${this.config.string.totalTax}`,
+                                `\n ${helper.formatCurrency(
+                                    helper.calcTax(this.items),
+                                    currOptions,
+                                )}`,
+                            ],
+                            [
+                                `\n ${this.config.string.totalDiscount}`,
+                                `\n ${helper.formatCurrency(
+                                    helper.calcTotalDiscount(
+                                        this.items,
+                                        this.creditNote.discount,
+                                    ),
+                                    currOptions,
+                                )}`,
+                            ],
+                            [
+                                `\n ${this.config.string.total}`,
+                                `\n ${helper.formatCurrency(
+                                    helper.calcFinalTotal(
+                                        this.items,
+                                        this.creditNote.discount,
+                                    ),
+                                    currOptions,
+                                )}`,
+                            ],
+                            [
+                                `\n ${this.config.string.credit}`,
+                                `\n ${helper.formatCurrency(
+                                    Number(this.creditNote.credit).toFixed(2),
+                                    currOptions,
+                                )}`,
+                            ],
+
+                            [
+                                `\n ${this.config.string.remainingCredit}`,
+                                `\n ${helper.formatCurrency(
+                                    helper.calcRemainingCredit(
+                                        this.items,
+                                        this.creditNote.credit,
+                                    ),
+                                    currOptions,
+                                )}`,
+                            ],
+                        ],
+                    },
+                },
+            ],
+        };
+
+        sections.push(sectionTotal);
+
+        /**
+         * Left: QR section.
+         *
+         * @since 1.0.0
+         */
+        if (this.payload.qr) {
+            const sectionQR = {
+                margin: [0, 50, 0, 0],
+                qr: this.payload.qr.data,
+                fit: this.payload.qr.width || '50',
+            };
+
+            sections.push(sectionQR);
+        }
+
+        /**
+         * Left: Notes section.
+         *
+         * @since 1.0.0
+         */
+        if (this.payload.note) {
+            const sectionNote = {
+                margin: [0, this.payload.qr ? 20 : 50, 0, 0],
+                text: this.payload.note,
+                italics: true,
+            };
+
+            sections.push(sectionNote);
+        }
+
+        /**
+         * Return the invoice sections.
+         *
+         * @since 1.0.0
+         */
+        return sections;
+    }
+}
