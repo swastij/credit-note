@@ -10,7 +10,6 @@ interface Helpers {
 		args?: Record<string, string>
 	): string;
 	calcRemainingCredit(item: ItemInfo[], credit: string): number | string;
-    calcTotalDiscount(items: ItemInfo[], discount?: string): number | string;
 }
 
 const helper: Helpers = {
@@ -90,8 +89,7 @@ const helper: Helpers = {
 
         const subTotal = Number(this.calcSubTotal(items));
         const tax = Number(this.calcTax(items));
-        const totalDiscount = Number(this.calcTotalDiscount(items, discount));
-        return (subTotal + tax - totalDiscount).toFixed(2);
+        return (subTotal + tax - Number(discount??0)).toFixed(2);
     },
 
 	/**
@@ -128,14 +126,6 @@ const helper: Helpers = {
 	calcRemainingCredit: function (item: ItemInfo[], credit: string): string {
         const total = this.calcFinalTotal(item);
         return (Number(total) - Number(credit)).toFixed(2);
-    },
-
-    calcTotalDiscount: function (item: ItemInfo[], discount?: string): string {
-        let totalDiscount = 0;
-        item.forEach((item) => {
-            totalDiscount = totalDiscount + Number(item.discount ?? 0);
-        });
-        return (totalDiscount + Number(discount ?? 0)).toFixed(2);
     },
 };
 
