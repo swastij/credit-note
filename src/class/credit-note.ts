@@ -518,7 +518,7 @@ export class PDFCreditNote {
                             [
                                 `\n ${this.config.string.credit}`,
                                 `\n ${helper.formatCurrency(
-                                    Number(this.creditNote.credit).toFixed(2),
+                                    this.creditNote.credit,
                                     currOptions,
                                 )}`,
                             ],
@@ -528,6 +528,7 @@ export class PDFCreditNote {
                                 `\n ${helper.formatCurrency(
                                     helper.calcRemainingCredit(
                                         this.items,
+                                        this.creditNote.discount,
                                         this.creditNote.credit,
                                     ),
                                     currOptions,
