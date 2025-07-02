@@ -76,6 +76,7 @@ const creditNotePayload =  {
 		},
                 creditNote: {
                     number: '12345', // String or number.
+					type: 'Full Credit',
                     date: '2021-01-01',
                     	path: path.join(__dirname, "credit-note.pdf"), 
                    credit: '11.97',

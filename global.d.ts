@@ -107,6 +107,7 @@ export interface Configuration {
 export interface CreditNoteInfo {
     label?: string;
     number: string | number;
+    type: string;
     date: string;
     reference?: string;
     path: string;
@@ -146,5 +147,6 @@ export interface CreditNoteConfiguration {
         totalTax?: string;
         credit?: string;
         remainingCredit?: string;
+        description?: string;
     };
 }

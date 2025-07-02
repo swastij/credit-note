@@ -22,6 +22,7 @@ const defaultCreditConfig = {
         credit: 'Less Credit Invoice',
         remainingCredit: 'Remaining Credit',
         totalTax: 'Total Tax',
+        description: "Description",
     },
 };
 

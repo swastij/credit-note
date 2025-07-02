@@ -342,6 +342,12 @@ export class PDFCreditNote {
             style: 'text',
         });
 
+        const descriptionLabel = this.config.string.description;
+
+        sectionCompany.columns[1].stack.push({
+            text: descriptionLabel + ': ' +  (this.creditNote.type) + ' - Duplicate of invoice #' + (this.creditNote.number || this.date),
+            style: 'text',
+        });
         // sections.push(sectionCompany);
 
         /**
