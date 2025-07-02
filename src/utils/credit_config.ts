@@ -18,7 +18,6 @@ const defaultCreditConfig = {
         total: 'Total',
         discount: 'Discount',
         totalDiscount: 'TotalDiscount',
-        taxReg: 'Tax Reg',
         subTotal: 'Subtotal',
         credit: 'Less Credit Invoice',
         remainingCredit: 'Remaining Credit',

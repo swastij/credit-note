@@ -78,7 +78,6 @@ const creditNotePayload =  {
                     number: '12345', // String or number.
                     date: '2021-01-01',
                     	path: path.join(__dirname, "credit-note.pdf"), 
-                    taxReg: '45647',
                    credit: '11.97',
             discount: '0.2',
                 },

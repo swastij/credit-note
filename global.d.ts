@@ -108,7 +108,6 @@ export interface CreditNoteInfo {
     label?: string;
     number: string | number;
     date: string;
-    taxReg?: string;
     reference?: string;
     path: string;
     currency?: string;
@@ -147,6 +146,5 @@ export interface CreditNoteConfiguration {
         totalTax?: string;
         credit?: string;
         remainingCredit?: string;
-        taxReg?: string;
     };
 }

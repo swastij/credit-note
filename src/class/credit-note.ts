@@ -342,13 +342,6 @@ export class PDFCreditNote {
             style: 'text',
         });
 
-        const taxRegLabel = this.config.string.taxReg;
-
-        sectionCompany.columns[1].stack.push({
-            text: taxRegLabel + ': ' + (this.creditNote.taxReg || ''),
-            style: 'text',
-        });
-
         // sections.push(sectionCompany);
 
         /**
