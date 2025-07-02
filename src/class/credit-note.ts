@@ -331,7 +331,7 @@ export class PDFCreditNote {
             this.config.string.creditNoteNumber || 'Credit Note Number';
 
         sectionCompany.columns[1].stack.push({
-            text: refLabel + ': #' + (this.creditNote.number || 1),
+            text: refLabel + ': CN-' + (this.creditNote.number || 1),
             style: 'textBold',
         });
 
@@ -345,7 +345,7 @@ export class PDFCreditNote {
         const descriptionLabel = this.config.string.description;
 
         sectionCompany.columns[1].stack.push({
-            text: descriptionLabel + ': ' +  (this.creditNote.type) + ' - Duplicate of invoice #' + (this.creditNote.number || this.date),
+            text: descriptionLabel + ': ' +  (this.creditNote.type) + ' - Duplicate of invoice ' + (this.creditNote.number || this.date),
             style: 'text',
         });
         // sections.push(sectionCompany);
