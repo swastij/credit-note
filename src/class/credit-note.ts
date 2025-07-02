@@ -501,10 +501,7 @@ export class PDFCreditNote {
                             [
                                 `\n ${this.config.string.totalDiscount}`,
                                 `\n ${helper.formatCurrency(
-                                    helper.calcTotalDiscount(
-                                        this.items,
-                                        this.creditNote.discount,
-                                    ),
+                                    this.creditNote.discount,
                                     currOptions,
                                 )}`,
                             ],

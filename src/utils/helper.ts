@@ -9,7 +9,7 @@ interface Helpers {
 		amount: number | string,
 		args?: Record<string, string>
 	): string;
-	calcRemainingCredit(item: ItemInfo[], credit: string): number | string;
+	calcRemainingCredit(item: ItemInfo[], discount: string, credit: string): number | string;
 }
 
 const helper: Helpers = {
@@ -123,8 +123,8 @@ const helper: Helpers = {
 		}).format(Number(amount));
 	},
 
-	calcRemainingCredit: function (item: ItemInfo[], credit: string): string {
-        const total = this.calcFinalTotal(item);
+	calcRemainingCredit: function (item: ItemInfo[], discount:string, credit: string): string {
+        const total = this.calcFinalTotal(item, discount);
         return (Number(total) - Number(credit)).toFixed(2);
     },
 };
